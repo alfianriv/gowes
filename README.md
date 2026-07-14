@@ -53,6 +53,10 @@ Static site murni, gak ada build command:
 - **Vercel**: import repo, framework preset "Other", build command kosong, output directory `.`. `vercel.json` udah include header no-cache buat `sw.js`.
 - **Netlify**: sama, publish directory `.`, no build command.
 
+## Update PWA
+
+Tiap deploy yang ubah `index.html` atau `js/app.js`, bump versi `SHELL_CACHE` di `sw.js` (mis. `gowes-shell-v2` → `v3`). Tanpa ini browser gak detect ada `sw.js` baru, jadi cache-first tetep serve app shell versi lama meski udah re-deploy.
+
 ## Batasan yang disengaja
 
 - Instruksi navigasi gak sebut nama jalan — cuma arah belok + jarak, dihitung dari geometri rute. Upgrade butuh routing engine berbayar (Mapbox/Google Directions).

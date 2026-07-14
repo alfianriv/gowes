@@ -280,6 +280,7 @@
 
   /* ---------- navigation mode ---------- */
   .puck { width: 22px; height: 22px; display: grid; place-items: center; }
+  .maplibregl-marker:has(.puck) { transition: transform .3s linear; }
   .puck-arrow {
     width: 0; height: 0;
     border-left: 8px solid transparent; border-right: 8px solid transparent;

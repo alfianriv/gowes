@@ -4,7 +4,7 @@
    - Tiles CyclOSM: cache-first runtime, dibatasi maks 600 tile
    - BRouter routing: selalu network (hasil rute tidak dicache)
 */
-const SHELL_CACHE = 'gowes-shell-v4';
+const SHELL_CACHE = 'gowes-shell-v5';
 const TILE_CACHE = 'gowes-tiles-v1';
 const CDN_CACHE = 'gowes-cdn-v1';
 const MAX_TILES = 600;

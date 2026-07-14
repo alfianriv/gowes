@@ -592,6 +592,13 @@ function startNavigation() {
   initCompass();
 }
 
+// exponential smoothing sudut (circular, aware wraparound 0/360) — kompas mentah noisy tiap event
+function smoothAngle(prev, next, alpha) {
+  if (prev == null) return next;
+  const diff = ((next - prev + 540) % 360) - 180;
+  return (prev + diff * alpha + 360) % 360;
+}
+
 // kompas device (magnetometer) — kaya gmaps, biar puck tetep nunjuk arah pas hp diem/pelan.
 // GPS course cuma akurat pas gerak; compass isi kekosongan pas diem.
 function initCompass() {
@@ -603,7 +610,7 @@ function initCompass() {
     } else if (e.absolute && typeof e.alpha === 'number') {
       heading = (360 - e.alpha) % 360; // Android deviceorientationabsolute — alpha muter CCW, dibalik
     }
-    if (heading != null && isFinite(heading)) compassHeading = heading;
+    if (heading != null && isFinite(heading)) compassHeading = smoothAngle(compassHeading, heading, 0.15);
   };
   // ponytail: no UI prompt "putar angka 8" ala gmaps, browser compass biasanya udah auto-calibrated
   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -677,7 +684,11 @@ function onNavPosition(pos) {
   lastNavPos = [lng, lat];
 
   updatePuck(lng, lat, bearing);
-  if (followMode) map.easeTo({ center: [lng, lat], bearing, duration: 500 });
+  if (followMode) {
+    // deadband: kamera cuma ikut rotate kalau beda arah cukup besar, biar noise kompas gak bikin map "muter-muter"
+    const camDiff = Math.abs(((bearing - map.getBearing() + 540) % 360) - 180);
+    map.easeTo({ center: [lng, lat], bearing: camDiff > 8 ? bearing : map.getBearing(), duration: 500 });
+  }
 
   const idx = nearestRouteIndex(routeCoords, lng, lat);
   const distToRoute = haversine([lng, lat], routeCoords[idx]);

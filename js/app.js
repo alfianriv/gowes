@@ -554,10 +554,13 @@ let wakeLock = null;
 let followMode = true;
 let puckMarker = null;
 let lastNavPos = null;
+let lastBearing = 0;
 let offRouteSince = null;
 let navRecalculating = false;
 let maneuverData = { cum: [], total: 0, maneuvers: [] };
 let maneuverPtr = 0;
+let compassHeading = null;
+let orientationHandler = null;
 
 $('btnNav').addEventListener('click', startNavigation);
 $('btnNavExit').addEventListener('click', stopNavigation);
@@ -576,6 +579,7 @@ function startNavigation() {
   if (!navigator.geolocation) { toast('Geolocation tidak didukung di device ini', true); return; }
   navMode = true;
   followMode = true;
+  lastBearing = map.getBearing();
   $('btnRecenter').classList.remove('show');
   maneuverData = buildManeuvers(routeCoords);
   maneuverPtr = 0;
@@ -585,6 +589,41 @@ function startNavigation() {
     enableHighAccuracy: true, maximumAge: 5000, timeout: 30000
   });
   requestWakeLock();
+  initCompass();
+}
+
+// kompas device (magnetometer) — kaya gmaps, biar puck tetep nunjuk arah pas hp diem/pelan.
+// GPS course cuma akurat pas gerak; compass isi kekosongan pas diem.
+function initCompass() {
+  compassHeading = null;
+  orientationHandler = e => {
+    let heading = null;
+    if (typeof e.webkitCompassHeading === 'number') {
+      heading = e.webkitCompassHeading; // iOS Safari — udah 0=utara searah jarum jam
+    } else if (e.absolute && typeof e.alpha === 'number') {
+      heading = (360 - e.alpha) % 360; // Android deviceorientationabsolute — alpha muter CCW, dibalik
+    }
+    if (heading != null && isFinite(heading)) compassHeading = heading;
+  };
+  // ponytail: no UI prompt "putar angka 8" ala gmaps, browser compass biasanya udah auto-calibrated
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().then(state => {
+      if (state === 'granted') attachOrientation();
+    }).catch(() => {});
+  } else {
+    attachOrientation();
+  }
+}
+function attachOrientation() {
+  window.addEventListener('deviceorientationabsolute', orientationHandler, true);
+  window.addEventListener('deviceorientation', orientationHandler, true);
+}
+function detachOrientation() {
+  if (!orientationHandler) return;
+  window.removeEventListener('deviceorientationabsolute', orientationHandler, true);
+  window.removeEventListener('deviceorientation', orientationHandler, true);
+  orientationHandler = null;
+  compassHeading = null;
 }
 
 // ponytail: no fallback buat browser tanpa wakeLock API — layar mati ya mati, gak fatal
@@ -608,6 +647,7 @@ function stopNavigation() {
   offRouteSince = null;
   wakeLock?.release().catch(() => {});
   wakeLock = null;
+  detachOrientation();
 }
 
 let lastNavErrToast = 0;
@@ -622,9 +662,18 @@ function onNavError(err) {
 
 function onNavPosition(pos) {
   const { longitude: lng, latitude: lat, heading, speed } = pos.coords;
-  const bearing = (typeof heading === 'number' && isFinite(heading))
-    ? heading
-    : (lastNavPos ? bearingBetween(lastNavPos, [lng, lat]) : map.getBearing());
+  // ponytail: GPS heading/posisi noise beberapa meter pas diem/pelan bikin bearing acak — pertahanin arah terakhir
+  // kecuali gerakan cukup jauh (>5m) atau device kasih heading valid pas speed lumayan
+  const moved = lastNavPos ? haversine(lastNavPos, [lng, lat]) : Infinity;
+  let bearing = lastBearing;
+  if (typeof heading === 'number' && isFinite(heading) && speed > 1) {
+    bearing = heading; // GPS course — paling akurat pas beneran gerak
+  } else if (compassHeading != null) {
+    bearing = compassHeading; // kompas device — akurat pas diem/pelan, kaya gmaps
+  } else if (moved > 5) {
+    bearing = lastNavPos ? bearingBetween(lastNavPos, [lng, lat]) : bearing;
+  }
+  lastBearing = bearing;
   lastNavPos = [lng, lat];
 
   updatePuck(lng, lat, bearing);

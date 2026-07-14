@@ -48,16 +48,18 @@
     background: var(--asphalt);
     border: 1px solid var(--line);
     border-radius: 10px;
-    padding: 7px 12px 6px;
+    padding: 6px 10px 5px;
     display: flex; align-items: baseline; gap: 6px;
     box-shadow: 0 4px 16px rgba(0,0,0,.35);
+    flex-shrink: 0;
   }
   .brand b {
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700; font-size: 20px; letter-spacing: .04em;
+    font-weight: 700; font-size: 17px; letter-spacing: .04em;
     color: var(--hivis); text-transform: uppercase;
   }
-  .brand span { font-size: 11px; color: var(--text-dim); letter-spacing: .06em; text-transform: uppercase; }
+  .brand span { font-size: 10px; color: var(--text-dim); letter-spacing: .06em; text-transform: uppercase; }
+  @media (max-width: 380px) { .brand span { display: none; } }
 
   .search-box {
     pointer-events: auto;
@@ -111,9 +113,9 @@
     appearance: none; border: 0; background: transparent;
     color: var(--text-dim);
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 600; font-size: 14px; letter-spacing: .05em;
+    font-weight: 600; font-size: 12.5px; letter-spacing: .03em;
     text-transform: uppercase;
-    padding: 12px 13px; min-height: 44px; cursor: pointer;
+    padding: 10px 9px; min-height: 44px; cursor: pointer;
   }
   .profile-picker button + button { border-left: 1px solid var(--line); }
   .profile-picker button.active { background: var(--hivis); color: #14160a; }
@@ -324,7 +326,7 @@
   body.nav-mode .nav-panel { display: flex; }
   body.nav-mode .computer, body.nav-mode .actions,
   body.nav-mode .topbar, body.nav-mode .status-pill,
-  body.nav-mode .maplibregl-ctrl-top-right { display: none; }
+  body.nav-mode .maplibregl-ctrl-top-left { display: none; }
   .nav-stat { flex: 1; display: flex; align-items: baseline; gap: 12px; }
   .nav-dist {
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700;

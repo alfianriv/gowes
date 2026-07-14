@@ -28,21 +28,22 @@ const map = new maplibregl.Map({
     layers: [{ id: 'cyclosm', type: 'raster', source: 'cyclosm' }]
   }
 });
-map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
+// top-left biar gak numpuk sama .actions (fab GPX/export/undo/clear) yang di kanan
+map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-left');
 map.addControl(new maplibregl.GeolocateControl({
   positionOptions: { enableHighAccuracy: true }, trackUserLocation: true
-}), 'top-right');
+}), 'top-left');
 
-// topbar bisa wrap 2 baris di mobile (search box) — geser kontrol top-right biar gak ketutupan
-function clampTopRightControls() {
-  const ctrl = document.querySelector('.maplibregl-ctrl-top-right');
+// topbar bisa wrap 2 baris di mobile (search box) — geser kontrol top-left biar gak ketutupan
+function clampTopLeftControls() {
+  const ctrl = document.querySelector('.maplibregl-ctrl-top-left');
   const topbar = document.querySelector('.topbar');
   if (ctrl && topbar) ctrl.style.marginTop = (topbar.offsetHeight + 6) + 'px';
 }
-new ResizeObserver(clampTopRightControls).observe(document.querySelector('.topbar'));
-window.addEventListener('load', clampTopRightControls);
-window.addEventListener('resize', clampTopRightControls);
-map.on('load', clampTopRightControls);
+new ResizeObserver(clampTopLeftControls).observe(document.querySelector('.topbar'));
+window.addEventListener('load', clampTopLeftControls);
+window.addEventListener('resize', clampTopLeftControls);
+map.on('load', clampTopLeftControls);
 
 /* ================= state ================= */
 let waypoints = [];        // [{lng, lat, marker}]
